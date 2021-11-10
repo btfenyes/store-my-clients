@@ -6,6 +6,7 @@ import { urlencoded } from 'body-parser';
 const app: Application = express();
 
 app.use(urlencoded({ extended: true }));
+app.use(express.json());
 app.use('/client', clientRouter);
 
 const startApp = async () => {
