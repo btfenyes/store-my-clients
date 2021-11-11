@@ -1,5 +1,7 @@
 import { DataTypes, Model, Optional } from "sequelize";
 import sequelize from '../database/database';
+import City from './city.model';
+import CompanyType from './companyType.model';
 
 interface ClientAttributes {
   id: number,
@@ -59,5 +61,8 @@ Client.init({
   timestamps: true,
   paranoid: true,
 });
+
+Client.hasOne(CompanyType);
+Client.hasOne(City);
 
 export default Client;
