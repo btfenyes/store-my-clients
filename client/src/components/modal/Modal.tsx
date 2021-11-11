@@ -1,10 +1,8 @@
-import axios from 'axios';
-import React, { useState, useEffect } from 'react';
-import styled from 'styled-components';
+import React from 'react';
 
 import ModalInner from './ModalInner';
-import { Client } from '../../types/client';
-import { setConstantValue } from 'typescript';
+import { Client } from '../../types/types';
+import styled from 'styled-components';
 
 interface ModalProps {
   open: boolean;
@@ -13,35 +11,31 @@ interface ModalProps {
   onSelectedClientChange(client: Client): void;
 }
 
-interface DivStyled {
-  open: boolean;
-}
-
 const Div = styled.div`
   margin: auto;
   width: 100vw;
   height: 100vh;
   background: rgba(0, 0, 0, 0.2);
-  display: ${(props: any) => props.open ? 'block' : 'none'};
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1000;
 `;
 
 const Modal = (props: ModalProps) => {
   const { open, setIsOpen, selectedClient, onSelectedClientChange } = props;
   const style = {
-    margin: 'auto',
-    width: '100vw',
-    height: '100vh',
-    background: 'rgba(0, 0, 0, 0.2)',
     display: open ? 'block' : 'none',
   };
+
   const clickHandler = () => {
     setIsOpen(false);
   };
 
   return (
-    <div onClick={clickHandler} style={style}>  
+    <Div onClick={clickHandler} style={style}>  
       <ModalInner selectedClient={selectedClient} onSelectedClientChange={onSelectedClientChange} />
-    </div>
+    </Div>
   )
 };
 

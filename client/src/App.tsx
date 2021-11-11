@@ -1,42 +1,75 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Column, Row } from 'react-table';
 import axios from 'axios';
+import styled from 'styled-components';
 
 import './App.css';
 import Table from './components/table/Table';
 import Modal from './components/modal/Modal';
-import { Client } from './types/client';
+import Button from './components/Button';
+import Spinner from './components/Spinner';
+import { Client } from './types/types';
 
-const emptyClient = {
-  name: '',
-  taxNumber: '',
-  companyRegistrationNumber: '',
-  address: '',
-  phone: '',
-  bankAccount: '',
-  comment: '',
-};
+const ButtonContainer = styled.div`
+  width: 100%;
+  margin: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
 
 function App() {
+  const emptyClient = {
+    name: '',
+    taxNumber: '',
+    companyRegistrationNumber: '',
+    address: '',
+    phone: '',
+    bankAccount: '',
+    comment: '',
+  };
+
   const [clients, setClients] = useState<Client[]>([]);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [selectedClient, setSelectedClient] = useState<Client>(emptyClient);
+  const [loading, setLoading] = useState(true);
+
+  const getClients = useCallback(() => {
+    setLoading(true);
+    axios.get('http://localhost:5000/client')
+    .then((response) => {
+      const fetchedClients = response.data.map((client: any) => ({
+        ...client,
+        City: client.City?.name,
+        CompanyType: client.CompanyType?.name,
+      }));
+      
+      setClients(fetchedClients);
+    })
+    .catch((err) => console.log(err))
+    .finally(() => setLoading(false));
+  }, []);
 
   const data = useMemo(() => [
     ...clients,
   ], [clients]);
 
   const handleEditClick = (row: Row<Client>) => {
-    setSelectedClient({...row.values, id: row.original.id } as Client);
+    setSelectedClient({
+      ...row.values, 
+      id: row.original.id, 
+      CompanyTypeId: row.original.CompanyTypeId,
+      CityId: row.original.CityId,
+    } as Client);
   };
 
   useEffect(() => {
-    console.log('selectedClient effect')
     setIsModalOpen(true);
   }, [selectedClient]);
 
-  const handleDeleteClick = (row: Row<Client>) => {
-    axios.delete(`http://localhost:5000/client/${row.original.id}`);
+  const handleDeleteClick = async (row: Row<Client>) => {
+    await axios.delete(`http://localhost:5000/client/${row.original.id}`);
+    getClients();
   };
 
   const columns = useMemo(() => [
@@ -66,7 +99,15 @@ function App() {
     },
     {
       Header: 'Megjegyzés',
-      accessor: 'comments',
+      accessor: 'comment',
+    },
+    {
+      Header: 'Település',
+      accessor: 'City',
+    },
+    {
+      Header: 'Cégforma',
+      accessor: 'CompanyType',
     },
     {
       Header: () => null,
@@ -80,35 +121,41 @@ function App() {
     },
   ], []);
 
-  // 'Adószám', 'Cégjegyzékszám', 'Cím', 'Telefonszám', 'Bankszámlaszám', 'Megjegyzés'
-
   useEffect(() => {
-    axios.get<Client[]>('http://localhost:5000/client')
-    .then((response) => {
-      setClients(response.data);
-    })
-    .catch((err) => console.log(err));
-  }, [isModalOpen]);
+    if (isModalOpen) {
+      return;
+    }
+
+    getClients();
+  }, [isModalOpen, getClients]);
 
   const modalClickedHandler = (isOpen: boolean) => {
     setIsModalOpen(isOpen);
   };
 
-  const handleNeClientClick = () => {
+  const handleNewClientClick = () => {
     setSelectedClient(emptyClient);
     setIsModalOpen(true);
   };
 
-  return (
-    <div className="App">
+  const content = loading 
+  ? <Spinner />
+  : <>
       <Modal 
         onSelectedClientChange={(client) => setSelectedClient(client)} 
         open={isModalOpen}
         setIsOpen={modalClickedHandler}
         selectedClient={selectedClient}
       />
-      <button onClick={handleNeClientClick}>New Client</button>
       <Table columns={columns} data={data} />
+      <ButtonContainer>
+        <Button onClick={handleNewClientClick}>New Client</Button>
+      </ButtonContainer>
+    </>;
+
+  return (
+    <div className="App">
+      {content}
     </div>
   );
 }

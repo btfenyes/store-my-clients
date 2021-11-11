@@ -12,6 +12,8 @@ interface ClientAttributes {
   phone?: string,
   bankAccount?: string,
   comment?: string,
+  CityId?: number,
+  CompanyTypeId?: number,
 }
 
 export interface ClientInput extends Optional<ClientAttributes, 'id'> {}
@@ -26,6 +28,8 @@ class Client extends Model<ClientAttributes, ClientInput> implements ClientAttri
   public phone!: string;
   public bankAccount!: string;
   public comment!: string;
+  public CityId!: number;
+  public CompanyTypeId!: number;
 }
 
 Client.init({
@@ -56,13 +60,19 @@ Client.init({
   comment: {
     type: DataTypes.STRING,
   },
+  CityId: {
+    type: DataTypes.INTEGER,
+  },
+  CompanyTypeId: {
+    type: DataTypes.INTEGER,
+  }
 }, {
   sequelize,
   timestamps: true,
   paranoid: true,
 });
 
-Client.hasOne(CompanyType);
-Client.hasOne(City);
+Client.belongsTo(CompanyType);
+Client.belongsTo(City);
 
 export default Client;

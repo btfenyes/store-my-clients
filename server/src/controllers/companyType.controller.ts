@@ -10,7 +10,7 @@ export const create = async (req: Request, res: Response) => {
 };
 
 export const update = async (req: Request, res: Response) => {
-  const companyType = await CompanyType.findByPk(req.body.id);
+  const companyType = await CompanyType.findByPk(req.params.id);
   if (!companyType) {
     throw new Error('CompanyType not found!');
   }
@@ -19,9 +19,9 @@ export const update = async (req: Request, res: Response) => {
 };
 
 export const deleteById = async (req: Request, res: Response) => {
-  return !!(await CompanyType.destroy({ where: { id: req.body.id } }));
+  return !!(await CompanyType.destroy({ where: { id: req.params.id } }));
 };
 
 export const getById = async (req: Request, res: Response) => {
-  return await CompanyType.findByPk(req.body.id);
+  return await CompanyType.findByPk(req.params.id);
 };

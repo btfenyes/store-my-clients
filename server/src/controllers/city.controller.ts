@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import City from '../models/companyType.model';
+import City from '../models/city.model';
 
 export const getAll = async (req: Request, res: Response) => {
   return await City.findAll();
@@ -10,7 +10,7 @@ export const create = async (req: Request, res: Response) => {
 };
 
 export const update = async (req: Request, res: Response) => {
-  const city = await City.findByPk(req.body.id);
+  const city = await City.findByPk(req.params.id);
   if (!city) {
     throw new Error('CompanyType not found!');
   }
@@ -19,9 +19,9 @@ export const update = async (req: Request, res: Response) => {
 };
 
 export const deleteById = async (req: Request, res: Response) => {
-  return !!(await City.destroy({ where: { id: req.body.id } }));
+  return !!(await City.destroy({ where: { id: req.params.id } }));
 };
 
 export const getById = async (req: Request, res: Response) => {
-  return await City.findByPk(req.body.id);
+  return await City.findByPk(req.params.id);
 };

@@ -1,6 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
-import { Client } from '../../types/client';
+import { Client } from '../../types/types';
 import { useTable, TableOptions } from 'react-table';
 
 const Div = styled.div `
@@ -45,7 +45,7 @@ const Table = ({ columns, data }: any /* TableOptions<object> */) => {
           {headerGroups.map(headerGroup => (
             <tr {...headerGroup.getHeaderGroupProps()}>
               {headerGroup.headers.map(column => (
-                <th {...column.getHeaderProps()}>{column.render("Header")}</th>
+                <th {...column.getHeaderProps()}>{column.render('Header')}</th>
               ))}
             </tr>
           ))}
@@ -56,7 +56,7 @@ const Table = ({ columns, data }: any /* TableOptions<object> */) => {
             return (
               <tr {...row.getRowProps()}>
                 {row.cells.map(cell => {
-                  return <td {...cell.getCellProps()}>{cell.render("Cell")}</td>;
+                  return <td {...cell.getCellProps()}>{cell.render('Cell')}</td>;
                 })}
               </tr>
             );
