@@ -1,15 +1,17 @@
 import axios from 'axios';
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
-import { Client, City, CompanyType } from '../../types/types';
+import { Client, City, CompanyType } from '../../types';
 import Input from './Input';
 import Select from './Select';
 import Button from '../Button';
 import Alert from '../modal/Alert';
+import Spinner from '../Spinner';
 
 interface ModalInnerProps {
   selectedClient: Client;
   onSelectedClientChange(client: Client): void;
+  setIsOpen(isOpen: boolean): void;
 }
 
 const Div = styled.div`
@@ -24,7 +26,7 @@ const Div = styled.div`
   height: 22rem;
 `;
 
-const ModalInner = ({ selectedClient, onSelectedClientChange }: ModalInnerProps) => {
+const ModalInner = ({ selectedClient, onSelectedClientChange, setIsOpen }: ModalInnerProps) => {
   const [companyTypes, setCompanyTypes] = useState<CompanyType[]>([]);
   const [cities, setCities] = useState<City[]>([]);
   const [loading, setLoading] = useState(true);
@@ -32,11 +34,10 @@ const ModalInner = ({ selectedClient, onSelectedClientChange }: ModalInnerProps)
   const [newCompanyType, setNewCompanyType] = useState(false);
   const [newCity, setNewCity] = useState(false);
 
-
   useEffect(() => {
     try {
-      const getCities = () => axios.get('http://localhost:5000/city');
-      const getCompanyTypes = () => axios.get('http://localhost:5000/companyType');
+      const getCities = () => axios.get('/city');
+      const getCompanyTypes = () => axios.get('/companyType');
 
       Promise.all([getCities(), getCompanyTypes()])
       .then((result) => {
@@ -84,19 +85,27 @@ const ModalInner = ({ selectedClient, onSelectedClientChange }: ModalInnerProps)
   };
 
   const handleCompanyTypeIdChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    onSelectedClientChange({ ...selectedClient, CompanyTypeId: +e.target.value });
+    onSelectedClientChange({ 
+      ...selectedClient, 
+      CompanyTypeId: +e.target.value,
+      CompanyType: companyTypes.find((companyType) => companyType.id === +e.target.value)?.name,
+    });
   };
 
   const handleCityIdChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    onSelectedClientChange({ ...selectedClient, CityId: +e.target.value });
+    onSelectedClientChange({ 
+      ...selectedClient, 
+      CityId: +e.target.value, 
+      City: cities.find((city) => city.id === +e.target.value)?.name,
+    });
   };
 
   const handleCompanyTypeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    onSelectedClientChange({ ...selectedClient, CompanyType: e.target.value });
+    onSelectedClientChange({ ...selectedClient, CompanyType: e.target.value, CompanyTypeId: undefined });
   };
 
   const handleCityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    onSelectedClientChange({ ...selectedClient, City: e.target.value });
+    onSelectedClientChange({ ...selectedClient, City: e.target.value, CityId: undefined });
   };
 
   const handleValidationError = (errorMessage: string) => {
@@ -112,17 +121,19 @@ const ModalInner = ({ selectedClient, onSelectedClientChange }: ModalInnerProps)
       return;
     }
 
-    if (!selectedClient.CityId || !selectedClient.City) {
+    if (!selectedClient.CityId && !selectedClient.City) {
       handleValidationError('A település megadása kötelező!')
       return;
     }
 
     try {
       if (selectedClient.id) {
-        await axios.put(`http://localhost:5000/client/${selectedClient.id}`, selectedClient);
+        await axios.put(`/client/${selectedClient.id}`, selectedClient);
       } else {
-        await axios.post('http://localhost:5000/client', selectedClient);
+        await axios.post('/client', selectedClient);
       }
+
+      setIsOpen(false);
     } catch (e) {
       handleValidationError((e as Error).message);
     }
@@ -149,7 +160,7 @@ const ModalInner = ({ selectedClient, onSelectedClientChange }: ModalInnerProps)
       />;
 
   const content = loading 
-    ? 'Loading...'
+    ? <Spinner />
     : <>
         <Input key="name" type="text" label="Név" value={selectedClient.name} onChange={handleNameChange} />
         <Input type="text" label="Adószám" value={selectedClient.taxNumber} onChange={handleTaxNumberChange} />
@@ -161,7 +172,7 @@ const ModalInner = ({ selectedClient, onSelectedClientChange }: ModalInnerProps)
         {companyTypeInput}
         {cityInput}
         {alert ? <Alert text={alert} /> : null}
-        <Button onClick={handleUpdateClick}>{selectedClient.id ? 'Update' : 'Add new client'}</Button>
+        <Button onClick={handleUpdateClick}>Mentés</Button>
       </>;
 
   return (

@@ -13,7 +13,7 @@ const validate = (client: Client & UserRequest) => {
     throw new Error('A név megadása kötelező!');
   }
 
-  if (!client.CityId || !client.City) {
+  if (!client.CityId && !client.City) {
     throw new Error('A település megadása kötelező!');
   }
 };
@@ -33,7 +33,6 @@ const handleNewCity = async (client: Client & UserRequest) => {
 };
 
 const handleNewCompanyType = async (client: Client & UserRequest) => {
-  console.log(client.CompanyType)
   if (!client.CompanyType) {
     return client;
   }
@@ -42,7 +41,6 @@ const handleNewCompanyType = async (client: Client & UserRequest) => {
   console.log(companyType)
   if (!companyType) {
     companyType = await CompanyType.create({ name: client.CompanyType });
-    console.log(companyType)
   }
   
   client.CompanyTypeId = companyType.id;
@@ -54,18 +52,20 @@ export const getAll = async (req: Request, res: Response) => {
 };
 
 export const create = async (req: Request, res: Response) => {
-  const client = req.body;
+  let client = req.body;
   validate(client);
-  await handleNewCity(client);
-  await handleNewCompanyType(client);
+  client = await handleNewCity(client);
+  client = await handleNewCompanyType(client);
   return await Client.create(client);
 };
 
 export const update = async (req: Request, res: Response) => {
-  const client = req.body;
+  let client = req.body;
+  console.log(client)
   validate(client);
-  await handleNewCity(client);
-  await handleNewCompanyType(client);
+  client = await handleNewCity(client);
+  client = await handleNewCompanyType(client);
+  console.log(client)
   return await Client.update(client, { where: { id: +req.params.id } }); 
 };
 

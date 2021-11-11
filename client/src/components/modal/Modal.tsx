@@ -1,7 +1,7 @@
 import React from 'react';
 
 import ModalInner from './ModalInner';
-import { Client } from '../../types/types';
+import { Client } from '../../types';
 import styled from 'styled-components';
 
 interface ModalProps {
@@ -34,7 +34,7 @@ const Modal = (props: ModalProps) => {
 
   return (
     <Div onClick={clickHandler} style={style}>  
-      <ModalInner selectedClient={selectedClient} onSelectedClientChange={onSelectedClientChange} />
+      <ModalInner setIsOpen={setIsOpen} selectedClient={selectedClient} onSelectedClientChange={onSelectedClientChange} />
     </Div>
   )
 };

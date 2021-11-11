@@ -1,21 +1,17 @@
 import React from 'react';
-import styled from 'styled-components';
+import { css } from "@emotion/react";
 
-const Div = styled.div`
-  width: 100%;
-  height: 100%;
-  margin: auto;
-  z-index: 3000;
-  color: black;
-  background: white;
-  text-align: center;
+import MoonLoader  from 'react-spinners/MoonLoader';
+
+const override = css`
+  display: block;
+  margin: 0 auto;
+  border-color: red;
 `;
 
 const Spinner = () => {
   return (
-    <Div>
-      Loading...
-    </Div>
+    <MoonLoader  css={override} size={150} speedMultiplier={.5} />
   );
 };
 

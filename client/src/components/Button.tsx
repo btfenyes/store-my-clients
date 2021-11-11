@@ -10,16 +10,25 @@ const StyledButton = styled.button`
   font-size: 1.2rem;
   position: relative;
   cursor: pointer;
+  margin: auto;
 `;
-
 interface ButtonProps {
   children: string;
   onClick(): void;
+  type?: 'default' | 'danger';
+  style?: object;
 };
 
-const Button = (props: ButtonProps) => {
+const Button = ({ children, onClick, style, type = 'default' }: ButtonProps) => {
+  const btnStyle = { background: '#FFBF00', ...style };
+  switch (type) {
+    case 'danger':
+      btnStyle.background = '#f05c52';
+      break;
+  }
+  
   return (
-    <StyledButton style={{margin: 'auto'}} onClick={props.onClick}>{props.children}</StyledButton>
+    <StyledButton style={btnStyle} onClick={onClick}>{children}</StyledButton>
   );
 };
 

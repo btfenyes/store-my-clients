@@ -1,15 +1,15 @@
 import React from 'react';
 import styled from 'styled-components';
-import { Client } from '../../types/types';
-import { useTable, TableOptions } from 'react-table';
+import { useTable } from 'react-table';
 
 const Div = styled.div `
   table {
-    width: fit-content;
+    width: 100%;
     margin: auto;
     border-spacing: 0;
     border-collapse: collapse;
     border: 1px solid gray;
+    box-shadow: 5px 5px 12px -8px #000000;
 
     tr {
       border: 1px solid gray;
@@ -23,13 +23,13 @@ const Div = styled.div `
     th,
     td {
       margin: 0;
-      padding: 1rem;
+      padding: .8rem .6rem;
     }
   }
 `;
 
 // TODO: figure out the typing for this
-const Table = ({ columns, data }: any /* TableOptions<object> */) => {
+const Table = ({ columns, data, tableRef }: any /* TableOptions<object> */) => {
   const {
     getTableProps,
     getTableBodyProps,
@@ -40,7 +40,7 @@ const Table = ({ columns, data }: any /* TableOptions<object> */) => {
 
   return (
     <Div>
-      <table {...getTableProps()}>
+      <table ref={tableRef} {...getTableProps()}>
         <thead>
           {headerGroups.map(headerGroup => (
             <tr {...headerGroup.getHeaderGroupProps()}>

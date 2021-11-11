@@ -1,21 +1,27 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { Column, Row } from 'react-table';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { Row } from 'react-table';
 import axios from 'axios';
 import styled from 'styled-components';
+import XLSX from 'xlsx';
 
 import './App.css';
 import Table from './components/table/Table';
 import Modal from './components/modal/Modal';
 import Button from './components/Button';
+import Filter from './components/filter/Filter';
 import Spinner from './components/Spinner';
-import { Client } from './types/types';
+import { Client } from './types';
+import { useDidMountEffect } from './hooks';
 
-const ButtonContainer = styled.div`
-  width: 100%;
-  margin: 1rem;
+const AppContainer = styled.div`
+  max-width: 70%;
+  margin: auto;
+`;
+
+const ButtonRowContainer = styled.div`
+  margin-top: 1rem;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  justify-content: space-between;
 `;
 
 function App() {
@@ -27,16 +33,24 @@ function App() {
     phone: '',
     bankAccount: '',
     comment: '',
+    CityId: undefined,
+    CompanyTypeId: undefined,
+    City: '',
+    CompanyType: '',
   };
 
   const [clients, setClients] = useState<Client[]>([]);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [selectedClient, setSelectedClient] = useState<Client>(emptyClient);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState<boolean>(true);
+
+  const table = useRef<HTMLTableElement>();
+
+  const fetchClients = () => axios.get('/client');
 
   const getClients = useCallback(() => {
     setLoading(true);
-    axios.get('http://localhost:5000/client')
+    fetchClients()
     .then((response) => {
       const fetchedClients = response.data.map((client: any) => ({
         ...client,
@@ -45,6 +59,7 @@ function App() {
       }));
       
       setClients(fetchedClients);
+      setIsModalOpen(false);
     })
     .catch((err) => console.log(err))
     .finally(() => setLoading(false));
@@ -54,28 +69,32 @@ function App() {
     ...clients,
   ], [clients]);
 
-  const handleEditClick = (row: Row<Client>) => {
+  const handleEditClick = useCallback((row: Row<Client>) => {
     setSelectedClient({
       ...row.values, 
       id: row.original.id, 
       CompanyTypeId: row.original.CompanyTypeId,
       CityId: row.original.CityId,
     } as Client);
-  };
+  }, []);
 
-  useEffect(() => {
+  useDidMountEffect(() => {
     setIsModalOpen(true);
   }, [selectedClient]);
 
-  const handleDeleteClick = async (row: Row<Client>) => {
-    await axios.delete(`http://localhost:5000/client/${row.original.id}`);
+  const handleDeleteClick = useCallback(async (row: Row<Client>) => {
+    await axios.delete(`/client/${row.original.id}`);
     getClients();
-  };
+  }, [getClients]);
 
   const columns = useMemo(() => [
     {
       Header: 'Név',
       accessor: 'name',
+    },
+    {
+      Header: 'Cégforma',
+      accessor: 'CompanyType',
     },
     {
       Header: 'Adószám',
@@ -86,6 +105,14 @@ function App() {
       accessor: 'companyRegistrationNumber',
     },
     {
+      Header: 'Bankszámlaszám',
+      accessor: 'bankAccount',
+    },
+    {
+      Header: 'Település',
+      accessor: 'City',
+    },
+    {
       Header: 'Cím',
       accessor: 'address',
     },
@@ -94,32 +121,20 @@ function App() {
       accessor: 'phone',
     },
     {
-      Header: 'Bankszámlaszám',
-      accessor: 'bankAccount',
-    },
-    {
       Header: 'Megjegyzés',
       accessor: 'comment',
     },
     {
-      Header: 'Település',
-      accessor: 'City',
-    },
-    {
-      Header: 'Cégforma',
-      accessor: 'CompanyType',
-    },
-    {
       Header: () => null,
       id: 'edit',
-      Cell: ({ row }: any) => <div onClick={() => handleEditClick(row)}>Edit</div>,
+      Cell: ({ row }: any) => <Button onClick={() => handleEditClick(row)}>Módosítás</Button>,
     },
     {
       Header: () => null,
       id: 'delete',
-      Cell: ({ row }: any) => <div onClick={() => handleDeleteClick(row)}>Delete</div>,
+      Cell: ({ row }: any) => <Button onClick={() => handleDeleteClick(row)} type='danger'>Törlés</Button>,
     },
-  ], []);
+  ], [handleEditClick, handleDeleteClick]);
 
   useEffect(() => {
     if (isModalOpen) {
@@ -138,24 +153,89 @@ function App() {
     setIsModalOpen(true);
   };
 
+  const exportTable = () => {
+    const exportClients = clients.map((client) => ({
+      'Név': client.name,
+      'Cégforma': client.CompanyType,
+      'Adószám': client.taxNumber,
+      'Cégjegyzékszám': client.companyRegistrationNumber,
+      'Bankszámlaszám': client.bankAccount,
+      'Település': client.City,
+      'Cím': client.address,
+      'Telefonszám': client.phone,
+      'Megjegyzés': client.comment,
+    }));
+    const ws = XLSX.utils.json_to_sheet(exportClients);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Clients');
+    XLSX.writeFile(wb, 'clients.xlsx');
+  };
+
+  const handleNameFilter = async (filter: string) => {
+    const response = await fetchClients();
+    const fetchedClients = response.data.map((client: any) => ({
+      ...client,
+      City: client.City?.name,
+      CompanyType: client.CompanyType?.name,
+    }));
+
+    if (filter) {
+      setClients(fetchedClients.filter((client: Client) => client.name.toLowerCase().includes(filter.toLowerCase())));
+    } else {
+      setClients(fetchedClients);
+    }
+  };
+
+  const handleCityFilter = async (filter: number) => {
+    const response = await fetchClients();
+    const fetchedClients = response.data.map((client: any) => ({
+      ...client,
+      City: client.City?.name,
+      CompanyType: client.CompanyType?.name,
+    }));
+
+    if (filter) {
+      setClients(fetchedClients.filter((client: Client) => client.CityId === filter));
+    } else {
+      setClients(fetchedClients);
+    }
+  };
+
+  const handleCompanyTypeFilter = async (filter: number) => {
+    const response = await fetchClients();
+    const fetchedClients = response.data.map((client: any) => ({
+      ...client,
+      City: client.City?.name,
+      CompanyType: client.CompanyType?.name,
+    }));
+
+    if (filter) {
+      setClients(fetchedClients.filter((client: Client) => client.CompanyTypeId === filter));
+    } else {
+      setClients(fetchedClients);
+    }
+  };
+
   const content = loading 
   ? <Spinner />
-  : <>
+  : <Table tableRef={table} columns={columns} data={data} />;
+
+  return (
+    <div className="App">
+      <AppContainer>
       <Modal 
         onSelectedClientChange={(client) => setSelectedClient(client)} 
         open={isModalOpen}
         setIsOpen={modalClickedHandler}
         selectedClient={selectedClient}
       />
-      <Table columns={columns} data={data} />
-      <ButtonContainer>
-        <Button onClick={handleNewClientClick}>New Client</Button>
-      </ButtonContainer>
-    </>;
-
-  return (
-    <div className="App">
+      <Filter onNameFilter={handleNameFilter} onCompanyTypeFilter={handleCompanyTypeFilter} onCityFilter={handleCityFilter} />
       {content}
+      <ButtonRowContainer>
+        <Button onClick={handleNewClientClick} style={ {margin: '0' }}>Új Ügyfél</Button>
+        <Button onClick={exportTable} style={ {margin: '0' }}>Export</Button>
+      </ButtonRowContainer>
+    </AppContainer>
     </div>
   );
 }
