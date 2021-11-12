@@ -7,7 +7,7 @@ Server:
   npm run dev
   ```
   
-Client
+Client:
   ```
   cd client
   npm i
