@@ -1,4 +1,4 @@
-Two run the project, the server and the client should be started in two separate terminal windows.
+To run the project, the server and the client should be started in two separate terminal windows.
 
 Server:
   ```
